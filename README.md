@@ -62,6 +62,14 @@ The release's 4-digit NZBGeek category id maps to the SABnzbd category by its fi
 
 On listing pages the category is read from the release row's own category cell, so mixed-category searches still land each release in the right place. On detail pages it's read from the release overlay. If no category can be determined, SABnzbd's default (`*`) is used.
 
+### Exceptions
+
+| NZBGeek category    | SABnzbd category |
+| ------------------- | ---------------- |
+| `TV > Anime` (5070) | `anime`          |
+
+More exact-match overrides can be added in the `CAT_OVERRIDES` (listing pages) and `TEXT_OVERRIDES` (detail pages) blocks at the top of the script.
+
 ## How it works
 
 1. The script reads the NZB URL from the existing Download NZB link (`api.nzbgeek.info/cdn?t=get&id=...`), which already carries your NZBGeek session key.

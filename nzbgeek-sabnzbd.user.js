@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NZBGeek → SABnzbd+ Sender
 // @namespace    https://nzbgeek.info/
-// @version      1.1.0
+// @version      1.2.0
 // @description  Adds a "Send to SABnzbd+" button next to every "Download NZB" button on NZBGeek movies/tv/games/audio/books/pc/xxx pages. The NZB is sent to SABnzbd with the release's top-level NZBGeek category (movies, tv, games, audio, books, pc, xxx).
 // @match        https://nzbgeek.info/*
 // @grant        GM_xmlhttpRequest
@@ -33,6 +33,20 @@
     7: 'books',
   };
 
+  // Exact NZBGeek category overrides: a specific 4-digit category id maps to a
+  // different SABnzbd category than its top level would imply. Takes
+  // precedence over TOP_CAT.
+  const CAT_OVERRIDES = {
+    5070: 'anime', // TV > Anime -> SABnzbd "anime"
+  };
+
+  // Same overrides for release detail pages, where the category is shown as
+  // text ("TV > Anime") instead of a category link. Keys are the lowercase
+  // category path.
+  const TEXT_OVERRIDES = {
+    'tv > anime': 'anime',
+  };
+
   const TOP_CAT_NAMES = new Set(Object.values(TOP_CAT));
   const TEXT_ALIASES = { console: 'games' }; // "Games" is the usual label, be lenient
   const ICON_OK = 'fas fa-check';
@@ -54,12 +68,17 @@
   // ------------------------------------------------------- category logic
   function catFromCode(href) {
     const m = /(?:[?&])c=(\d{4})/.exec(href);
-    if (m) return TOP_CAT[m[1][0]] || null;
-    return null;
+    if (!m) return null;
+    const code = m[1];
+    if (CAT_OVERRIDES[code]) return CAT_OVERRIDES[code];
+    return TOP_CAT[code[0]] || null;
   }
 
   function catFromText(text) {
-    const first = text.split('>')[0].trim().toLowerCase();
+    const norm = text.trim().toLowerCase().replace(/\s*>\s*/g, ' > ');
+    const override = TEXT_OVERRIDES[norm];
+    if (override) return override;
+    const first = norm.split('>')[0].trim();
     const name = TEXT_ALIASES[first] || first;
     return TOP_CAT_NAMES.has(name) ? name : null;
   }
